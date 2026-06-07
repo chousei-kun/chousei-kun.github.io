@@ -1,6 +1,6 @@
 # 調整くん
 
-Slotwise is an appointment scheduling app powered by Google Calendar `free/busy` data.
+Google Calendar の `free/busy` を使って、複数人の空き時間を提案する日程調整アプリです。
 
 ## Local development
 
@@ -23,9 +23,9 @@ npm run check
 
 ## First setup
 
-1. Edit `config.js` and set your Google OAuth Client ID
-2. Use `config.example.js` as the reference template
-3. Start the local server with `npm run dev`
+1. `config.js` に Google OAuth Client ID を設定
+2. `config.example.js` を見本として使う
+3. `npm run dev` でローカル起動
 
 ## Project structure
 
@@ -40,7 +40,7 @@ npm run check
 
 ## Runtime config
 
-Set the Google OAuth Client ID in `config.js`.
+`config.js` に Google OAuth Client ID を設定します。
 
 ```js
 window.SLOTWISE_CONFIG = {
@@ -48,21 +48,21 @@ window.SLOTWISE_CONFIG = {
 };
 ```
 
-The OAuth Client ID is public. Do not put a client secret in this repository.
+OAuth Client ID は公開識別子です。client secret はこのリポジトリに入れません。
 
 ## Current features
 
-- suggests meeting times in 30 minute increments
-- looks ahead 2 months
-- imports Google Calendar free/busy per participant
-- shares room URLs for invitees
-- aggregates participant availability into the host view
-- creates Google Calendar events and invites attendees
-- visualizes daily availability by participant
+- 30分刻みで候補を提案
+- 2カ月先まで検索
+- 参加者ごとの Google Calendar free/busy を取り込み
+- 招待URLを共有
+- 主催者画面へ参加者の空き状況を自動集約
+- Google Calendar 予定を作成して参加者へ招待送信
+- 日別、参加者別の空き状況を可視化
 
 ## Deployment
 
-See `DEPLOY.md`.
+`DEPLOY.md` を参照してください。
 
 ## GitHub readiness
 
