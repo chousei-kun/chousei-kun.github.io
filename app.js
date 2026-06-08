@@ -368,22 +368,31 @@ async function notifyNewParticipantConnection(participant) {
   if (!webhookUrl || !participant?.email) return;
 
   try {
+    const payload = JSON.stringify({
+      type: "participant_connected",
+      app: "調整くん",
+      roomId,
+      participant: {
+        id: participant.id,
+        name: participant.name,
+        email: participant.email
+      },
+      connectedAt: new Date().toISOString()
+    });
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
+      if (navigator.sendBeacon(webhookUrl, blob)) return;
+    }
+
     await fetch(webhookUrl, {
       method: "POST",
+      mode: "no-cors",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "text/plain;charset=UTF-8"
       },
-      body: JSON.stringify({
-        type: "participant_connected",
-        app: "調整くん",
-        roomId,
-        participant: {
-          id: participant.id,
-          name: participant.name,
-          email: participant.email
-        },
-        connectedAt: new Date().toISOString()
-      })
+      body: payload,
+      keepalive: true
     });
   } catch {
     // Ignore notification failures so calendar import still succeeds.
