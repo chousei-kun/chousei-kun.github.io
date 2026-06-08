@@ -61,7 +61,9 @@ const hostKeyFromUrl = pageParams.get("host") || "";
 const localRoomStorageKey = `chousei-kun.room.${roomId}`;
 
 if (!state.hostKey) {
-  if (hostKeyFromUrl) {
+  if (isInviteLink) {
+    state.hostKey = "";
+  } else if (hostKeyFromUrl) {
     state.hostKey = hostKeyFromUrl;
   } else if (storedHostKey) {
     state.hostKey = storedHostKey;
@@ -72,7 +74,7 @@ if (!state.hostKey) {
   }
 }
 
-if (state.hostKey) {
+if (state.hostKey && !isInviteLink) {
   localStorage.setItem(hostKeyStorageKey, state.hostKey);
 }
 
