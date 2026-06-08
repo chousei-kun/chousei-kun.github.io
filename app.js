@@ -508,11 +508,6 @@ function renderPeople() {
         />
       </label>
       <p class="person-meta">表示名は自由に変更できます。Gmail アドレスは他の参加者には表示されません。</p>
-      <div class="calendar-stack">
-        ${person.calendars.map((calendar) => `
-          <div class="calendar-row"><span>${escapeHtml(calendar)}</span><strong>freeBusy</strong></div>
-        `).join("")}
-      </div>
     </article>
   `).join("");
 
