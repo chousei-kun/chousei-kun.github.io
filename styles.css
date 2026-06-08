@@ -25,6 +25,12 @@ body {
   font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
 }
 
+.invite-mode #clientIdField,
+.invite-mode .client-id-note,
+.invite-mode .origin-box {
+  display: none !important;
+}
+
 button,
 input,
 select {

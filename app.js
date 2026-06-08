@@ -80,6 +80,10 @@ function refreshShareUrl() {
 refreshShareUrl();
 if (isInviteLink) {
   document.querySelector("#clientIdField").hidden = true;
+  const note = document.querySelector(".client-id-note");
+  if (note) note.hidden = true;
+  const originBox = document.querySelector(".origin-box");
+  if (originBox) originBox.hidden = true;
 }
 
 const minuteOfDay = (time) => {
