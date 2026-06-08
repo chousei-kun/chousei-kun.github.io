@@ -5,6 +5,18 @@
 This app uses Netlify Functions and Netlify Blobs for room aggregation.
 Prefer GitHub import deployment or Netlify CLI deployment instead of static drag and drop only.
 
+GitHub source repository:
+
+```text
+https://github.com/chousei-kun/chousei-kun
+```
+
+Production site:
+
+```text
+https://chousei-kun.netlify.app
+```
+
 Required Netlify settings:
 
 - publish directory: `.`
@@ -20,7 +32,7 @@ Important routes:
 After deploy, confirm this returns JSON:
 
 ```text
-https://your-site.netlify.app/api/room?room=test
+https://chousei-kun.netlify.app/api/room?room=test
 ```
 
 ## Google Cloud
@@ -33,7 +45,7 @@ https://your-site.netlify.app/api/room?room=test
 Example origins:
 
 ```text
-https://your-site.netlify.app
+https://chousei-kun.netlify.app
 http://127.0.0.1:4173
 ```
 
