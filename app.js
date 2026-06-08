@@ -9,6 +9,7 @@ const state = {
   googleCalendars: [],
   selectedCalendarIds: new Set(),
   currentGoogleUser: null,
+  hostKey: "",
   lastRoomSync: ""
 };
 
@@ -47,9 +48,29 @@ const createDateRange = () => {
 
 const dates = createDateRange();
 const pageParams = new URLSearchParams(window.location.search);
-const roomId = pageParams.get("room") || crypto.randomUUID();
+const initialRoomId = pageParams.get("room");
+const roomId = initialRoomId || crypto.randomUUID();
 const isInviteLink = pageParams.get("invite") === "1";
 const configuredGoogleClientId = window.SLOTWISE_CONFIG?.googleClientId || "";
+const hostKeyStorageKey = `chousei-kun.hostKey.${roomId}`;
+const storedHostKey = localStorage.getItem(hostKeyStorageKey) || "";
+const hostKeyFromUrl = pageParams.get("host") || "";
+
+if (!state.hostKey) {
+  if (hostKeyFromUrl) {
+    state.hostKey = hostKeyFromUrl;
+  } else if (storedHostKey) {
+    state.hostKey = storedHostKey;
+  } else if (!isInviteLink && !initialRoomId) {
+    state.hostKey = crypto.randomUUID();
+  } else {
+    state.hostKey = "";
+  }
+}
+
+if (state.hostKey) {
+  localStorage.setItem(hostKeyStorageKey, state.hostKey);
+}
 
 const storedClientId = localStorage.getItem("slotwise.googleClientId");
 if (configuredGoogleClientId) {
@@ -103,6 +124,29 @@ const formatDate = (dateText) => {
 };
 
 const overlaps = (aStart, aEnd, bStart, bEnd) => aStart < bEnd && bStart < aEnd;
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function initialsFromName(name) {
+  return String(name || "Google User")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "G";
+}
+
+function participantById(participantId) {
+  return people.find((person) => person.id === participantId) || null;
+}
 
 function mergedBusyForDate(dateText, bufferMinutes) {
   const ranges = [];
@@ -340,31 +384,108 @@ function renderPeople() {
       <div class="person-head">
         <div class="avatar">${person.initials}</div>
         <div>
-          <strong>${person.name}</strong>
+          <strong>${escapeHtml(person.name)}</strong>
           <div class="pill secure">Google接続済み</div>
         </div>
       </div>
+      <label class="name-editor">
+        <span>参加者名</span>
+        <input
+          class="name-input"
+          type="text"
+          maxlength="120"
+          data-participant-id="${escapeHtml(person.id)}"
+          data-saved-name="${escapeHtml(person.name)}"
+          value="${escapeHtml(person.name)}"
+        />
+      </label>
+      <p class="person-meta">表示名は自由に変更できます。Gmail アドレスは他の参加者には表示されません。</p>
       <div class="calendar-stack">
-        ${person.email ? `<div class="calendar-row"><span>${person.email}</span><strong>user</strong></div>` : ""}
         ${person.calendars.map((calendar) => `
-          <div class="calendar-row"><span>${calendar}</span><strong>freeBusy</strong></div>
+          <div class="calendar-row"><span>${escapeHtml(calendar)}</span><strong>freeBusy</strong></div>
         `).join("")}
       </div>
     </article>
   `).join("");
+
+  attachParticipantNameEditors();
 }
 
 function upsertParticipant(participant) {
   const existingIndex = people.findIndex((person) => person.id === participant.id);
   if (existingIndex >= 0) {
-    people[existingIndex] = participant;
+    const current = people[existingIndex];
+    people[existingIndex] = {
+      ...current,
+      ...participant,
+      email: participant.email || current.email || "",
+      customName: participant.customName ?? current.customName ?? false
+    };
   } else {
     people.unshift(participant);
   }
 }
 
+function attachParticipantNameEditors() {
+  document.querySelectorAll(".name-input").forEach((input) => {
+    const commit = () => saveParticipantName(input);
+    input.addEventListener("change", commit);
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        input.blur();
+      }
+    });
+  });
+}
+
+async function saveParticipantName(input) {
+  const participantId = input.dataset.participantId;
+  const previousName = input.dataset.savedName || "";
+  const nextName = input.value.trim();
+
+  if (!participantId) return;
+  if (!nextName) {
+    input.value = previousName;
+    return;
+  }
+  if (nextName === previousName) return;
+
+  const participant = participantById(participantId);
+  if (!participant) return;
+
+  const updatedParticipant = {
+    ...participant,
+    name: nextName,
+    initials: initialsFromName(nextName),
+    customName: true
+  };
+
+  upsertParticipant(updatedParticipant);
+  updateAll();
+
+  try {
+    await publishParticipantToRoom(updatedParticipant);
+    setImportStatus(`${nextName} の表示名を更新しました`);
+  } catch (error) {
+    upsertParticipant({
+      ...participant,
+      name: previousName,
+      initials: initialsFromName(previousName),
+      customName: participant.customName ?? false
+    });
+    updateAll();
+    setImportStatus(`表示名の保存に失敗しました: ${error.message}`, "error");
+  }
+}
+
 async function roomRequest(options = {}) {
-  const query = `room=${encodeURIComponent(roomId)}`;
+  const queryParams = new URLSearchParams({ room: roomId });
+  if (state.hostKey) {
+    queryParams.set("host", state.hostKey);
+  }
+  const query = queryParams.toString();
   const requestOptions = {
     ...options,
     headers: {
@@ -602,14 +723,7 @@ function participantIdForProfile(profile) {
 }
 
 function initialsForProfile(profile) {
-  const name = profile.name || profile.email || "Google User";
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase() || "G";
+  return initialsFromName(profile.name || profile.email || "Google User");
 }
 
 async function importGoogleFreeBusy() {
@@ -634,15 +748,21 @@ async function importGoogleFreeBusy() {
   });
 
   const profile = state.currentGoogleUser;
+  const participantId = participantIdForProfile(profile);
+  const existingParticipant = participantById(participantId);
+  const resolvedName = existingParticipant?.customName
+    ? existingParticipant.name
+    : (profile.name || profile.email || "Google User");
   const connectedPerson = {
-    id: participantIdForProfile(profile),
-    name: profile.name || profile.email || "Google User",
+    id: participantId,
+    name: resolvedName,
     email: profile.email || "",
-    initials: initialsForProfile(profile),
+    initials: initialsFromName(resolvedName),
     calendars: state.googleCalendars
       .filter((calendar) => state.selectedCalendarIds.has(calendar.id))
       .map((calendar) => calendar.summaryOverride || calendar.summary),
     source: "google",
+    customName: existingParticipant?.customName || false,
     preference: { morning: 12, afternoon: 12, buffer: 12, avoidFridayLate: 8 },
     busy: buildBusyByDate(freeBusy)
   };

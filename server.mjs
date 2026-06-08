@@ -59,6 +59,7 @@ function sanitizeParticipant(participant) {
       ? participant.calendars.map((calendar) => String(calendar).slice(0, 120)).slice(0, 30)
       : [],
     source: "google",
+    customName: Boolean(participant.customName),
     preference: {
       morning: Number(participant.preference?.morning || 12),
       afternoon: Number(participant.preference?.afternoon || 12),
@@ -67,6 +68,21 @@ function sanitizeParticipant(participant) {
     },
     busy: participant.busy,
     updatedAt: new Date().toISOString()
+  };
+}
+
+function viewerCanSeeEmails(room, hostKey) {
+  return Boolean(room?.hostKey && hostKey && room.hostKey === hostKey);
+}
+
+function presentRoom(room, hostKey) {
+  const canSeeEmails = viewerCanSeeEmails(room, hostKey);
+  return {
+    ...room,
+    participants: (room.participants || []).map((participant) => ({
+      ...participant,
+      email: canSeeEmails ? participant.email || "" : ""
+    }))
   };
 }
 
@@ -79,6 +95,7 @@ async function readRequestBody(request) {
 async function handleRoomApi(request, response) {
   const url = new URL(request.url, `http://localhost:${port}`);
   const roomId = sanitizeRoomId(url.searchParams.get("room"));
+  const hostKey = sanitizeRoomId(url.searchParams.get("host"));
   if (!roomId) {
     response.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
     response.end(JSON.stringify({ error: "room is required" }));
@@ -90,7 +107,7 @@ async function handleRoomApi(request, response) {
 
   if (request.method === "GET") {
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-    response.end(JSON.stringify(current));
+    response.end(JSON.stringify(presentRoom(current, hostKey)));
     return;
   }
 
@@ -108,8 +125,15 @@ async function handleRoomApi(request, response) {
     return;
   }
 
+  if (current.hostKey && hostKey && current.hostKey !== hostKey) {
+    response.writeHead(403, { "Content-Type": "application/json; charset=utf-8" });
+    response.end(JSON.stringify({ error: "invalid host key" }));
+    return;
+  }
+
   rooms[roomId] = {
     roomId,
+    hostKey: current.hostKey || hostKey || "",
     participants: [
       participant,
       ...(current.participants || []).filter((item) => item.id !== participant.id)
@@ -119,7 +143,7 @@ async function handleRoomApi(request, response) {
   await writeRooms(rooms);
 
   response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-  response.end(JSON.stringify(rooms[roomId]));
+  response.end(JSON.stringify(presentRoom(rooms[roomId], hostKey)));
 }
 
 const server = createServer(async (request, response) => {

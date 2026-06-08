@@ -562,6 +562,11 @@ button {
   gap: 10px;
 }
 
+.person-head strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
 .avatar {
   display: grid;
   width: 38px;
@@ -576,6 +581,32 @@ button {
 .calendar-stack {
   display: grid;
   gap: 6px;
+}
+
+.name-editor {
+  display: grid;
+  gap: 6px;
+}
+
+.name-editor span,
+.person-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.name-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+  color: var(--ink);
+  font: inherit;
+}
+
+.name-input:focus {
+  outline: 2px solid rgba(21, 92, 65, 0.14);
+  border-color: var(--mint-deep);
 }
 
 .calendar-row {
