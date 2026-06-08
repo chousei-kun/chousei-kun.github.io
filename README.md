@@ -46,7 +46,7 @@ window.SLOTWISE_CONFIG = {
 };
 ```
 
-OAuth Client ID は公開識別子です。`client secret` はこのリポジトリに入れません。
+OAuth Client ID は `config.js` からアプリ側に読み込ませます。招待URLには含めません。`client secret` はこのリポジトリに入れません。
 
 ## 現在の機能
 

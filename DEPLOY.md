@@ -49,6 +49,8 @@ https://chousei-kun.netlify.app
 http://127.0.0.1:4173
 ```
 
+Invitees should not receive the OAuth Client ID via URL parameters. Keep it in `config.js` on the deployed site only.
+
 ## Scopes used
 
 ```text

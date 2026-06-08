@@ -49,15 +49,11 @@ const dates = createDateRange();
 const pageParams = new URLSearchParams(window.location.search);
 const roomId = pageParams.get("room") || crypto.randomUUID();
 const isInviteLink = pageParams.get("invite") === "1";
-const urlGoogleClientId = pageParams.get("cid") || "";
 const configuredGoogleClientId = window.SLOTWISE_CONFIG?.googleClientId || "";
 
 const storedClientId = localStorage.getItem("slotwise.googleClientId");
 if (configuredGoogleClientId) {
   document.querySelector("#googleClientId").value = configuredGoogleClientId;
-  document.querySelector("#clientIdField").hidden = true;
-} else if (urlGoogleClientId) {
-  document.querySelector("#googleClientId").value = urlGoogleClientId;
   document.querySelector("#clientIdField").hidden = true;
 } else if (storedClientId) {
   document.querySelector("#googleClientId").value = storedClientId;
@@ -66,7 +62,7 @@ document.querySelector("#currentOrigin").textContent = window.location.origin;
 document.querySelector("#inviteBanner").hidden = !isInviteLink;
 
 function currentGoogleClientId() {
-  return configuredGoogleClientId || urlGoogleClientId || document.querySelector("#googleClientId").value.trim();
+  return configuredGoogleClientId || document.querySelector("#googleClientId").value.trim();
 }
 
 function buildShareUrl() {
@@ -74,8 +70,6 @@ function buildShareUrl() {
     room: roomId,
     invite: "1"
   });
-  const clientId = currentGoogleClientId();
-  if (clientId) params.set("cid", clientId);
   return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
 }
 
@@ -665,7 +659,7 @@ async function importGoogleFreeBusy() {
 function requestGoogleCalendarAccess() {
   const clientId = currentGoogleClientId();
   if (!clientId) {
-    setImportStatus("アプリの Google OAuth Client ID が未設定です。主催者に設定を確認してください。", "error");
+    setImportStatus("Google OAuth Client ID が未設定です。主催者が config.js を設定してください。", "error");
     return;
   }
 
@@ -674,7 +668,7 @@ function requestGoogleCalendarAccess() {
     return;
   }
 
-  if (!configuredGoogleClientId && !urlGoogleClientId) {
+  if (!configuredGoogleClientId) {
     localStorage.setItem("slotwise.googleClientId", clientId);
   }
   refreshShareUrl();
