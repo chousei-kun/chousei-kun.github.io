@@ -11,6 +11,7 @@ const state = {
   currentGoogleUser: null,
   hostKey: "",
   roomGoogleClientId: "",
+  rememberedPreferredAccount: false,
   lastRoomSync: ""
 };
 
@@ -60,6 +61,7 @@ const hostKeyStorageKey = `chousei-kun.hostKey.${roomId}`;
 const storedHostKey = localStorage.getItem(hostKeyStorageKey) || "";
 const hostKeyFromUrl = pageParams.get("host") || "";
 const localRoomStorageKey = `chousei-kun.room.${roomId}`;
+const preferredAccountSnapshotKey = "chousei-kun.preferred-account-snapshot";
 
 if (!state.hostKey) {
   if (isInviteLink) {
@@ -97,6 +99,53 @@ function currentPreferredGoogleAccount() {
   return configuredPreferredGoogleAccount.trim().toLowerCase();
 }
 
+function updateConnectionUi() {
+  const button = document.querySelector("#connectButton");
+  const status = document.querySelector("#oauthStatus");
+
+  if (state.connected) {
+    button.innerHTML = '<span aria-hidden="true">✓</span><span>Google接続済み</span>';
+    status.textContent = state.rememberedPreferredAccount ? "接続済み(復元)" : "接続済み";
+    return;
+  }
+
+  button.innerHTML = '<span aria-hidden="true">◌</span><span>カレンダー連携</span>';
+  status.textContent = "未接続";
+}
+
+function persistPreferredAccountSnapshot(participant) {
+  if (!currentPreferredGoogleAccount()) return;
+  if ((participant.email || "").toLowerCase() !== currentPreferredGoogleAccount()) return;
+
+  const snapshot = {
+    savedAt: new Date().toISOString(),
+    participant,
+    currentGoogleUser: state.currentGoogleUser,
+    selectedCalendarIds: [...state.selectedCalendarIds]
+  };
+  localStorage.setItem(preferredAccountSnapshotKey, JSON.stringify(snapshot));
+}
+
+function restorePreferredAccountSnapshot() {
+  if (!currentPreferredGoogleAccount()) return;
+
+  try {
+    const snapshot = JSON.parse(localStorage.getItem(preferredAccountSnapshotKey) || "null");
+    if (!snapshot?.participant) return;
+    if ((snapshot.participant.email || "").toLowerCase() !== currentPreferredGoogleAccount()) return;
+
+    upsertParticipant(snapshot.participant);
+    state.currentGoogleUser = snapshot.currentGoogleUser || null;
+    state.selectedCalendarIds = new Set(snapshot.selectedCalendarIds || []);
+    state.connected = true;
+    state.rememberedPreferredAccount = true;
+    updateConnectionUi();
+    setImportStatus("前回の連携状態を復元しました。最新同期や予定作成時に必要なら再認証します。");
+  } catch {
+    // Ignore broken local snapshots.
+  }
+}
+
 function buildShareUrl() {
   const params = new URLSearchParams({
     room: roomId,
@@ -119,6 +168,7 @@ function renderShareModeNote() {
 
 refreshShareUrl();
 renderShareModeNote();
+updateConnectionUi();
 if (isInviteLink) {
   document.querySelector("#clientIdField").hidden = true;
   const note = document.querySelector(".client-id-note");
@@ -960,9 +1010,10 @@ async function importGoogleFreeBusy() {
   };
 
   state.connected = true;
-  document.querySelector("#connectButton").innerHTML = '<span aria-hidden="true">✓</span><span>Google接続済み</span>';
-  document.querySelector("#oauthStatus").textContent = "接続済み";
+  state.rememberedPreferredAccount = false;
+  updateConnectionUi();
   upsertParticipant(connectedPerson);
+  persistPreferredAccountSnapshot(connectedPerson);
   try {
     const room = await publishParticipantToRoom(connectedPerson);
     setImportStatus(`${connectedPerson.name} をルームへ共有しました。現在 ${room.participants?.length || 1}人が参加中です`);
@@ -1124,6 +1175,8 @@ document.querySelector("#inviteConnectButton").addEventListener("click", () => {
   document.querySelector("#connectDialog").showModal();
   requestGoogleCalendarAccess();
 });
+
+restorePreferredAccountSnapshot();
 
 if (isInviteLink) {
   setTimeout(() => {
