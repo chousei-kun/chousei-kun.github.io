@@ -1,9 +1,6 @@
 # Apps Script room API
 
-Use the code in `Code.gs` as a single Google Apps Script Web App that serves both:
-
-- shared room storage for participants and free/busy aggregation
-- notification emails when a new participant connects
+Use the code in `Code.gs` as a Google Apps Script Web App for shared room storage and free/busy aggregation.
 
 ## Setup
 
@@ -25,14 +22,6 @@ window.SLOTWISE_CONFIG = {
   googleClientId: "xxxxx.apps.googleusercontent.com",
   roomStore: "remote",
   roomApiUrl: "https://script.google.com/macros/s/your-web-app-id/exec",
-  preferredGoogleAccount: "your-account@gmail.com",
-  notificationWebhookUrl: "https://script.google.com/macros/s/your-web-app-id/exec"
+  preferredGoogleAccount: "your-account@gmail.com"
 };
 ```
-
-The same Web App URL can be used for both `roomApiUrl` and `notificationWebhookUrl`.
-
-## Host email notifications
-
-When the host connects their Google Calendar first, the room API stores that host email automatically.
-After that, when another participant connects a Google Calendar, an email is sent to the host's Gmail address.

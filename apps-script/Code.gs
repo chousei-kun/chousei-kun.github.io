@@ -8,11 +8,6 @@ function doGet(e) {
 
 function doPost(e) {
   var payload = parseJsonBody_(e);
-  if (payload && payload.type === "participant_connected") {
-    handleParticipantNotification_(payload);
-    return jsonOutput_({ ok: true, type: "participant_connected" });
-  }
-
   return handleRoomRequest_(e, "POST", payload);
 }
 
@@ -42,13 +37,6 @@ function handleRoomRequest_(e, method, payload) {
   }
 
   var currentParticipants = current.participants || [];
-  var isNewParticipant = Boolean(participant) && !currentParticipants.some(function (item) {
-    return item.id === participant.id;
-  });
-  var nextNotifyEmail = current.notifyEmail || "";
-  if (!nextNotifyEmail && hostKey && participant && participant.email) {
-    nextNotifyEmail = participant.email;
-  }
 
   var nextParticipants = participant
     ? [participant].concat(currentParticipants.filter(function (item) {
@@ -60,15 +48,11 @@ function handleRoomRequest_(e, method, payload) {
     roomId: roomId,
     hostKey: current.hostKey || hostKey || "",
     googleClientId: current.googleClientId || googleClientId || "",
-    notifyEmail: nextNotifyEmail,
     participants: nextParticipants,
     updatedAt: new Date().toISOString()
   };
 
   writeRoom_(roomId, nextRoom);
-  if (isNewParticipant && nextNotifyEmail && nextNotifyEmail !== participant.email) {
-    sendHostNotification_(nextNotifyEmail, roomId, participant);
-  }
   return jsonOutput_(presentRoom_(nextRoom, hostKey));
 }
 
@@ -161,44 +145,6 @@ function presentRoom_(room, hostKey) {
     }),
     updatedAt: room.updatedAt || ""
   };
-}
-
-function handleParticipantNotification_(payload) {
-  var notifyTo = PropertiesService.getScriptProperties().getProperty("NOTIFY_EMAIL");
-  if (!notifyTo) return;
-
-  var participant = payload.participant || {};
-  var lines = [
-    "A participant connected a Google Calendar.",
-    "",
-    "Room: " + (payload.roomId || ""),
-    "Name: " + (participant.name || ""),
-    "Email: " + (participant.email || ""),
-    "Connected at: " + (payload.connectedAt || "")
-  ];
-
-  MailApp.sendEmail({
-    to: notifyTo,
-    subject: "[調整くん] New participant connected",
-    body: lines.join("\n")
-  });
-}
-
-function sendHostNotification_(notifyTo, roomId, participant) {
-  var lines = [
-    "A participant connected a Google Calendar.",
-    "",
-    "Room: " + roomId,
-    "Name: " + (participant.name || ""),
-    "Email: " + (participant.email || ""),
-    "Connected at: " + new Date().toISOString()
-  ];
-
-  MailApp.sendEmail({
-    to: notifyTo,
-    subject: "[調整くん] New participant connected",
-    body: lines.join("\n")
-  });
 }
 
 function jsonOutput_(body) {

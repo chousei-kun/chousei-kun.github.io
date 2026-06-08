@@ -1,4 +1,4 @@
-# Deploy
+﻿# Deploy
 
 ## GitHub Pages
 
@@ -52,50 +52,9 @@ Example runtime config:
 window.SLOTWISE_CONFIG = {
   googleClientId: "xxxxx.apps.googleusercontent.com",
   roomStore: "local",
-  roomApiUrl: "",
-  notificationWebhookUrl: "https://script.google.com/macros/s/your-web-app-id/exec"
+  roomApiUrl: ""
 };
 ```
 
 `roomStore: "local"` makes the app use browser-local room storage on GitHub Pages.
 If you want participants to see each other across devices, set `roomApiUrl` to a shared room endpoint and do not use `local`.
-
-## Notification email webhook
-
-If you want an email when a new participant connects a Google Calendar, set `notificationWebhookUrl` to a webhook that accepts JSON `POST` requests.
-
-The app sends:
-
-```json
-{
-  "type": "participant_connected",
-  "app": "調整くん",
-  "roomId": "room-id",
-  "participant": {
-    "id": "google-...",
-    "name": "Participant Name",
-    "email": "participant@example.com"
-  },
-  "connectedAt": "2026-06-08T00:00:00.000Z"
-}
-```
-
-One lightweight option is a Google Apps Script web app. Google documents both `doPost(e)` web apps and mail sending via `MailApp.sendEmail()`.
-
-## Local development
-
-```powershell
-npm install
-npm run dev
-```
-
-Open:
-
-```text
-http://127.0.0.1:4173
-```
-
-## References
-
-- GitHub Pages overview: https://docs.github.com/pages/getting-started-with-github-pages/what-is-github-pages
-- GitHub Pages custom workflows: https://docs.github.com/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages

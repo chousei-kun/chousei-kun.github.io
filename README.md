@@ -1,15 +1,15 @@
-# 調整くん
+﻿# 隱ｿ謨ｴ縺上ｓ
 
-Google Calendar の free/busy を使って、複数人の空き時間候補を出すアポイント調整アプリです。
+Google Calendar 縺ｮ free/busy 繧剃ｽｿ縺｣縺ｦ縲∬､・焚莠ｺ縺ｮ遨ｺ縺肴凾髢灘呵｣懊ｒ蜃ｺ縺吶い繝昴う繝ｳ繝郁ｪｿ謨ｴ繧｢繝励Μ縺ｧ縺吶・
 
-## いまの構成
+## 縺・∪縺ｮ讒区・
 
-- フロントエンド: `index.html`, `styles.css`, `app.js`
-- ローカル開発サーバー: `server.mjs`
-- GitHub Pages 公開: `.github/workflows/pages.yml`
-- 設定ファイル: `config.js`
+- 繝輔Ο繝ｳ繝医お繝ｳ繝・ `index.html`, `styles.css`, `app.js`
+- 繝ｭ繝ｼ繧ｫ繝ｫ髢狗匱繧ｵ繝ｼ繝舌・: `server.mjs`
+- GitHub Pages 蜈ｬ髢・ `.github/workflows/pages.yml`
+- 險ｭ螳壹ヵ繧｡繧､繝ｫ: `config.js`
 
-## ローカル開発
+## 繝ｭ繝ｼ繧ｫ繝ｫ髢狗匱
 
 ```powershell
 npm install
@@ -28,26 +28,26 @@ Check:
 npm run check
 ```
 
-## GitHub Pages 移行メモ
+## GitHub Pages 遘ｻ陦後Γ繝｢
 
-Netlify credit がなくても、このリポジトリ単体で GitHub Pages に公開できるようにしています。
+Netlify credit 縺後↑縺上※繧ゅ√％縺ｮ繝ｪ繝昴ず繝医Μ蜊倅ｽ薙〒 GitHub Pages 縺ｫ蜈ｬ髢九〒縺阪ｋ繧医≧縺ｫ縺励※縺・∪縺吶・
 
-- 現在の repo 名のままなら公開 URL は `https://chousei-kun.github.io/chousei-kun/`
-- `https://chousei-kun.github.io/` にしたい場合は、GitHub Pages の仕様上、organization site 用に `chousei-kun.github.io` という repo 名が必要です
+- 迴ｾ蝨ｨ縺ｮ repo 蜷阪・縺ｾ縺ｾ縺ｪ繧牙・髢・URL 縺ｯ `https://chousei-kun.github.io/chousei-kun/`
+- `https://chousei-kun.github.io/` 縺ｫ縺励◆縺・ｴ蜷医・縲；itHub Pages 縺ｮ莉墓ｧ倅ｸ翫｛rganization site 逕ｨ縺ｫ `chousei-kun.github.io` 縺ｨ縺・≧ repo 蜷阪′蠢・ｦ√〒縺・
 
-GitHub Pages は静的ホスティングなので、Netlify Functions のようなサーバー処理は使えません。そのため `github.io` 上では共有ルーム保存をブラウザ内ローカル保存に切り替えています。
+GitHub Pages 縺ｯ髱咏噪繝帙せ繝・ぅ繝ｳ繧ｰ縺ｪ縺ｮ縺ｧ縲¨etlify Functions 縺ｮ繧医≧縺ｪ繧ｵ繝ｼ繝舌・蜃ｦ逅・・菴ｿ縺医∪縺帙ｓ縲ゅ◎縺ｮ縺溘ａ `github.io` 荳翫〒縺ｯ蜈ｱ譛峨Ν繝ｼ繝菫晏ｭ倥ｒ繝悶Λ繧ｦ繧ｶ蜀・Ο繝ｼ繧ｫ繝ｫ菫晏ｭ倥↓蛻・ｊ譖ｿ縺医※縺・∪縺吶・
 
-GitHub Pages 版でそのまま使えるもの:
+GitHub Pages 迚医〒縺昴・縺ｾ縺ｾ菴ｿ縺医ｋ繧ゅ・:
 
 - Google OAuth
-- Google Calendar free/busy 読み込み
-- 候補日時の提案
-- Google Calendar への予定作成
+- Google Calendar free/busy 隱ｭ縺ｿ霎ｼ縺ｿ
+- 蛟呵｣懈律譎ゅ・謠先｡・
+- Google Calendar 縺ｸ縺ｮ莠亥ｮ壻ｽ懈・
 
-GitHub Pages 版で軽くなるもの:
+GitHub Pages 迚医〒霆ｽ縺上↑繧九ｂ縺ｮ:
 
-- 複数ユーザーのルーム自動集約はブラウザ内ローカル保存のみ
-- 別端末や別ブラウザとの自動同期はなし
+- 隍・焚繝ｦ繝ｼ繧ｶ繝ｼ縺ｮ繝ｫ繝ｼ繝閾ｪ蜍暮寔邏・・繝悶Λ繧ｦ繧ｶ蜀・Ο繝ｼ繧ｫ繝ｫ菫晏ｭ倥・縺ｿ
+- 蛻･遶ｯ譛ｫ繧・挨繝悶Λ繧ｦ繧ｶ縺ｨ縺ｮ閾ｪ蜍募酔譛溘・縺ｪ縺・
 
 ## Runtime config
 
@@ -59,30 +59,25 @@ window.SLOTWISE_CONFIG = {
 };
 ```
 
-`googleClientId` は公開識別子なので `config.js` に置いて問題ありません。`client secret` は入れません。
+`googleClientId` 縺ｯ蜈ｬ髢玖ｭ伜挨蟄舌↑縺ｮ縺ｧ `config.js` 縺ｫ鄂ｮ縺・※蝠城｡後≠繧翫∪縺帙ｓ縲Ａclient secret` 縺ｯ蜈･繧後∪縺帙ｓ縲・
 
-## 新規連携の通知メール
+## 譁ｰ隕城｣謳ｺ縺ｮ騾夂衍繝｡繝ｼ繝ｫ
 
-新しく Google カレンダー連携した参加者が出たときに通知メールを送りたい場合は、`config.js` の `notificationWebhookUrl` に Webhook URL を設定します。
 
 ```js
 window.SLOTWISE_CONFIG = {
   googleClientId: "xxxxx.apps.googleusercontent.com",
   roomStore: "local",
   roomApiUrl: "",
-  preferredGoogleAccount: "your-account@gmail.com",
-  notificationWebhookUrl: "https://script.google.com/macros/s/your-web-app-id/exec"
+  preferredGoogleAccount: "your-account@gmail.com"
 };
 ```
 
-GitHub Pages は静的サイトなので、実際のメール送信は Google Apps Script など外部の受け口で行います。
-
-## GitHub
-
+GitHub Pages では、複数端末で参加者を集約したい場合に Google Apps Script などの共有APIを `roomApiUrl` に設定します。
 - Repository: `https://github.com/chousei-kun/chousei-kun`
 - Branch: `main`
 - Pages workflow: `.github/workflows/pages.yml`
 
-## デプロイ
+## 繝・・繝ｭ繧､
 
-詳しい手順は [DEPLOY.md](C:/Users/Wakua/Documents/Codex/2026-06-07/google-google/DEPLOY.md) を見てください。
+隧ｳ縺励＞謇矩・・ [DEPLOY.md](C:/Users/Wakua/Documents/Codex/2026-06-07/google-google/DEPLOY.md) 繧定ｦ九※縺上□縺輔＞縲・

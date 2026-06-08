@@ -371,7 +371,6 @@ async function localRoomRequest(options = {}) {
 async function notifyNewParticipantConnection(participant) {
   const webhookUrl = currentNotificationWebhookUrl();
   if (!webhookUrl || !participant?.email) return;
-  if (configuredRoomApiUrl && webhookUrl === configuredRoomApiUrl) return;
 
   try {
     const payload = JSON.stringify({
