@@ -53,9 +53,12 @@ const initialRoomId = pageParams.get("room");
 const roomId = initialRoomId || crypto.randomUUID();
 const isInviteLink = pageParams.get("invite") === "1";
 const configuredGoogleClientId = window.SLOTWISE_CONFIG?.googleClientId || "";
+const configuredRoomStore = window.SLOTWISE_CONFIG?.roomStore || "";
+const prefersLocalRoomStore = configuredRoomStore === "local" || window.location.hostname.endsWith("github.io");
 const hostKeyStorageKey = `chousei-kun.hostKey.${roomId}`;
 const storedHostKey = localStorage.getItem(hostKeyStorageKey) || "";
 const hostKeyFromUrl = pageParams.get("host") || "";
+const localRoomStorageKey = `chousei-kun.room.${roomId}`;
 
 if (!state.hostKey) {
   if (hostKeyFromUrl) {
@@ -99,7 +102,16 @@ function refreshShareUrl() {
   document.querySelector("#shareUrl").value = buildShareUrl();
 }
 
+function renderShareModeNote() {
+  const note = document.querySelector("#shareModeNote");
+  if (!note) return;
+  note.textContent = prefersLocalRoomStore
+    ? "GitHub Pages 版では共有ルームはこのブラウザ内に保存されます。複数人の自動集約を戻すには別の保存先が必要です。"
+    : "共有URLから参加できます。Google連携すると参加者と空き状況が自動で集まります。";
+}
+
 refreshShareUrl();
+renderShareModeNote();
 if (isInviteLink) {
   document.querySelector("#clientIdField").hidden = true;
   const note = document.querySelector(".client-id-note");
@@ -160,6 +172,75 @@ function initialsFromName(name) {
 
 function participantById(participantId) {
   return people.find((person) => person.id === participantId) || null;
+}
+
+function sanitizeGoogleClientIdClient(clientId) {
+  const value = String(clientId || "").trim();
+  if (!value) return "";
+  return /^[a-zA-Z0-9-]+\.apps\.googleusercontent\.com$/.test(value) ? value.slice(0, 200) : "";
+}
+
+function readLocalRoom() {
+  try {
+    const stored = localStorage.getItem(localRoomStorageKey);
+    return stored ? JSON.parse(stored) : { roomId, participants: [] };
+  } catch {
+    return { roomId, participants: [] };
+  }
+}
+
+function writeLocalRoom(room) {
+  localStorage.setItem(localRoomStorageKey, JSON.stringify(room));
+}
+
+function presentLocalRoom(room) {
+  const canSeeEmails = Boolean(room?.hostKey && state.hostKey && room.hostKey === state.hostKey);
+  return {
+    ...room,
+    googleClientId: room.googleClientId || "",
+    participants: (room.participants || []).map((participant) => ({
+      ...participant,
+      email: canSeeEmails ? participant.email || "" : ""
+    }))
+  };
+}
+
+async function localRoomRequest(options = {}) {
+  const current = readLocalRoom();
+
+  if (!options.method || options.method === "GET") {
+    return presentLocalRoom(current);
+  }
+
+  if (options.method !== "POST") {
+    throw new Error("method not allowed");
+  }
+
+  const body = JSON.parse(options.body || "{}");
+  const participant = body.participant && typeof body.participant === "object" ? body.participant : null;
+  const googleClientId = sanitizeGoogleClientIdClient(body.googleClientId);
+
+  if (!participant && !googleClientId) {
+    throw new Error("valid participant or googleClientId is required");
+  }
+
+  const nextParticipants = participant
+    ? [
+        participant,
+        ...((current.participants || []).filter((item) => item.id !== participant.id))
+      ].slice(0, 50)
+    : (current.participants || []);
+
+  const nextRoom = {
+    roomId,
+    hostKey: current.hostKey || state.hostKey || "",
+    googleClientId: current.googleClientId || googleClientId || "",
+    participants: nextParticipants,
+    updatedAt: new Date().toISOString()
+  };
+
+  writeLocalRoom(nextRoom);
+  return presentLocalRoom(nextRoom);
 }
 
 function mergedBusyForDate(dateText, bufferMinutes) {
@@ -508,6 +589,10 @@ async function saveParticipantName(input) {
 }
 
 async function roomRequest(options = {}) {
+  if (prefersLocalRoomStore) {
+    return localRoomRequest(options);
+  }
+
   const queryParams = new URLSearchParams({ room: roomId });
   if (state.hostKey) {
     queryParams.set("host", state.hostKey);
@@ -520,18 +605,26 @@ async function roomRequest(options = {}) {
       ...(options.headers || {})
     }
   };
-  let response = await fetch(`/api/room?${query}`, requestOptions);
+  let response;
+  try {
+    response = await fetch(`/api/room?${query}`, requestOptions);
 
-  if (response.status === 404) {
-    response = await fetch(`/.netlify/functions/room?${query}`, requestOptions);
+    if (response.status === 404) {
+      response = await fetch(`/.netlify/functions/room?${query}`, requestOptions);
+    }
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`${response.status} ${body}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (prefersLocalRoomStore) {
+      return localRoomRequest(options);
+    }
+    throw error;
   }
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`${response.status} ${body}`);
-  }
-
-  return response.json();
 }
 
 async function loadRoomParticipants({ quiet = false } = {}) {

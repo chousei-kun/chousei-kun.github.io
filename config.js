@@ -1,3 +1,4 @@
 window.SLOTWISE_CONFIG = {
-  googleClientId: ""
+  googleClientId: "",
+  roomStore: "local"
 };

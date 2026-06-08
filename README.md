@@ -1,8 +1,15 @@
 # 調整くん
 
-Google Calendar の `free/busy` を使って、複数人の空き時間を提案する日程調整アプリです。
+Google Calendar の free/busy を使って、複数人の空き時間候補を出すアポイント調整アプリです。
 
-## 開発
+## いまの構成
+
+- フロントエンド: `index.html`, `styles.css`, `app.js`
+- ローカル開発サーバー: `server.mjs`
+- GitHub Pages 公開: `.github/workflows/pages.yml`
+- 設定ファイル: `config.js`
+
+## ローカル開発
 
 ```powershell
 npm install
@@ -21,54 +28,44 @@ Check:
 npm run check
 ```
 
-## 初期設定
+## GitHub Pages 移行メモ
 
-1. `config.js` に Google OAuth Client ID を設定
-2. 見本は `config.example.js` を参照
-3. `npm run dev` でローカル起動
+Netlify credit がなくても、このリポジトリ単体で GitHub Pages に公開できるようにしています。
 
-## 構成
+- 現在の repo 名のままなら公開 URL は `https://chousei-kun.github.io/chousei-kun/`
+- `https://chousei-kun.github.io/` にしたい場合は、GitHub Pages の仕様上、organization site 用に `chousei-kun.github.io` という repo 名が必要です
 
-- `index.html` UI
-- `styles.css` スタイル
-- `app.js` 日程調整ロジック、Google OAuth、ルーム同期
-- `server.mjs` ローカルサーバーとローカル room API
-- `netlify/functions/room.mjs` Netlify 用 room API
-- `config.js` 実運用向けの公開設定
-- `config.example.js` 設定サンプル
-- `DEPLOY.md` デプロイ手順
+GitHub Pages は静的ホスティングなので、Netlify Functions のようなサーバー処理は使えません。そのため `github.io` 上では共有ルーム保存をブラウザ内ローカル保存に切り替えています。
+
+GitHub Pages 版でそのまま使えるもの:
+
+- Google OAuth
+- Google Calendar free/busy 読み込み
+- 候補日時の提案
+- Google Calendar への予定作成
+
+GitHub Pages 版で軽くなるもの:
+
+- 複数ユーザーのルーム自動集約はブラウザ内ローカル保存のみ
+- 別端末や別ブラウザとの自動同期はなし
 
 ## Runtime config
 
 ```js
 window.SLOTWISE_CONFIG = {
-  googleClientId: "xxxxx.apps.googleusercontent.com"
+  googleClientId: "xxxxx.apps.googleusercontent.com",
+  roomStore: "local"
 };
 ```
 
-OAuth Client ID は `config.js` からアプリ側に読み込ませます。招待URLには含めません。`client secret` はこのリポジトリに入れません。
+`googleClientId` は公開識別子なので `config.js` に置いて問題ありません。`client secret` は入れません。
 
-## 現在の機能
+## GitHub
 
-- 30分刻みで候補を提案
-- 2カ月先まで検索
-- 参加者ごとの Google Calendar free/busy を取り込み
-- 招待URLを共有
-- 主催者画面へ参加者の空き状況を自動集約
-- Google Calendar 予定を作成して参加者へ招待送信
-- 日別、参加者別の空き状況を可視化
-
-## GitHub 運用
-
-- GitHub repository: `chousei-kun/chousei-kun`
-- デフォルトブランチ: `main`
-- このリポジトリを開発の本線として使う
-- Netlify は GitHub 連携デプロイ前提
-
-## 公開URL
-
-- Production: `https://chousei-kun.netlify.app`
+- Repository: `https://github.com/chousei-kun/chousei-kun`
+- Branch: `main`
+- Pages workflow: `.github/workflows/pages.yml`
 
 ## デプロイ
 
-`DEPLOY.md` を参照してください。
+詳しい手順は [DEPLOY.md](C:/Users/Wakua/Documents/Codex/2026-06-07/google-google/DEPLOY.md) を見てください。

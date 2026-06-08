@@ -1,79 +1,76 @@
 # Deploy
 
-## Netlify
+## GitHub Pages
 
-This app uses Netlify Functions and Netlify Blobs for room aggregation.
-Prefer GitHub import deployment or Netlify CLI deployment instead of static drag and drop only.
+This repository is now prepared for GitHub Pages deployment with GitHub Actions.
 
-GitHub source repository:
+- Repository: `https://github.com/chousei-kun/chousei-kun`
+- Expected Pages URL for the current repo name: `https://chousei-kun.github.io/chousei-kun/`
 
-```text
-https://github.com/chousei-kun/chousei-kun
-```
+If you want the shorter root URL `https://chousei-kun.github.io/`, GitHub's official Pages model requires a repository named `chousei-kun.github.io` for the organization site.
 
-Production site:
+GitHub Pages is a static hosting service, so Netlify Functions and other server-side room APIs do not run there. In this Pages-ready build:
 
-```text
-https://chousei-kun.netlify.app
-```
+- Google Calendar OAuth still works
+- free/busy loading still works
+- candidate generation still works
+- event creation still works
+- room sharing falls back to browser-local storage on GitHub Pages
 
-Required Netlify settings:
+That means shared rooms on `github.io` do not automatically aggregate multiple people's data across different browsers or devices. Restoring that feature requires a separate backend or storage service.
 
-- publish directory: `.`
-- functions directory: `netlify/functions`
+## Enable Pages
 
-Important routes:
+1. Open the repository settings on GitHub
+2. Go to `Pages`
+3. Set `Source` to `GitHub Actions`
+4. Push to `main`
+5. Wait for the `pages` workflow to finish
 
-```text
-/api/room
-/.netlify/functions/room
-```
-
-After deploy, confirm this returns JSON:
+The workflow file lives at:
 
 ```text
-https://chousei-kun.netlify.app/api/room?room=test
+.github/workflows/pages.yml
 ```
 
 ## Google Cloud
 
 1. Enable Google Calendar API
 2. Create an OAuth client of type `Web application`
-3. Add your site to `Authorized JavaScript origins`
+3. Add the GitHub Pages origin to `Authorized JavaScript origins`
 4. Put the OAuth Client ID into `config.js`
 
-Example origins:
+Use this origin for the current repository setup:
 
 ```text
-https://chousei-kun.netlify.app
+https://chousei-kun.github.io
+```
+
+Example runtime config:
+
+```js
+window.SLOTWISE_CONFIG = {
+  googleClientId: "xxxxx.apps.googleusercontent.com",
+  roomStore: "local"
+};
+```
+
+`roomStore: "local"` makes the app use browser-local room storage on GitHub Pages.
+
+## Local development
+
+```powershell
+npm install
+npm run dev
+```
+
+Open:
+
+```text
 http://127.0.0.1:4173
 ```
 
-Invitees should not receive the OAuth Client ID via URL parameters. Keep it in `config.js` on the deployed site only.
+## References
 
-## Scopes used
-
-```text
-openid
-email
-profile
-https://www.googleapis.com/auth/calendar.calendarlist.readonly
-https://www.googleapis.com/auth/calendar.freebusy
-https://www.googleapis.com/auth/calendar.events
-```
-
-## Stored data
-
-Stored:
-
-- participant display name
-- participant email
-- selected calendar names
-- 2 months of busy time ranges
-
-Not stored:
-
-- event titles
-- event descriptions
-- locations
-- attendee lists from source calendars
+- GitHub Pages overview: https://docs.github.com/pages/getting-started-with-github-pages/what-is-github-pages
+- GitHub Pages custom workflows: https://docs.github.com/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages
